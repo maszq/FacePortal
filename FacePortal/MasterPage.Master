@@ -1,0 +1,58 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="MasterPage.master.cs" Inherits="FacePortal.MasterPage" %>
+
+<!DOCTYPE html>
+<link rel="stylesheet" runat="server" media="screen" href="/css/MasterPage.css" />
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>FacePortal</title>
+</head>
+
+<body style="background-image: url(https://i.imgur.com/LyClpug.gif); margin:0 !important;">
+    <form id="form1" runat="server">
+            <ul class="ulMenu">
+                <li class="liMenu"><a class="aMenu" href="Home.aspx">Strona główna</a></li>
+                <li class="liMenu"><a class="aMenu" href="News.aspx">Aktualności</a></li>
+                <li class="liMenu"><a class="aMenu" href="Ranking.aspx">Ranking</a></li>
+                <li class="liMenu"><a class="aMenu" href="CelebriteList.aspx">Lista celebrytów</a></li>
+                <li class="liMenu" id="list_users" runat="server"><a class="aMenu" href="UserList.aspx">Lista użytkowników</a></li>
+                <li class="liMenu" id="comparison" runat="server"><a class="aMenu" href="Comparison.aspx">Porównaj</a></li>
+                <li class="liMenu"><a class="aMenu" href="Contact.aspx">Kontakt</a></li>
+                <li class="liMenu"><asp:Label ID="hello_user" runat="server" ForeColor="#99FF33"></asp:Label></li>
+                <li class="liMenu" id="account" runat="server"><a class="aMenu"  href="MyAccount.aspx">Moje konto</a></li>
+                <li class="liMenu" id="logout" runat="server"><a class="aMenu"  href="Logout.aspx">Wyloguj</a></li>
+                <li class="liMenu" id="login" runat="server"><a class="aMenu"  href="Login.aspx">Zaloguj się</a></li>
+                <li class="liMenu" id="reg" runat="server" ><a class="aMenu" href="Register.aspx">Zarejestruj się</a></li>
+            </ul>
+        
+            <div class="ulMenuspace"></div>
+            <asp:Image class="welcomePanel" src="https://i.imgur.com/P4YqIFX.jpg" runat="server"/>
+            <div class="row">
+                <div id="leftColumn" class="column" style="background-color:#aaa;">
+                    <a class="weatherwidget-io" href="https://forecast7.com/pl/52d2321d01/warsaw/" data-label_1="WARSZAWA" data-label_2="POGODA" data-theme="original" ></a>
+                        <script>
+                            !function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = "/javascript/JavaScript.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "weatherwidget-io-js");
+                        </script>
+                    <div>
+                        Licznik odwiedzin: <asp:Label id="visitcounter" Text="0" runat="server"></asp:Label>
+                    </div>
+                </div>
+                <div id="middleColumn" class="column">    
+                        <div>
+                            <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"></asp:ContentPlaceHolder>
+                        </div>
+                </div>
+            </div>
+
+             <div id="cookieConsent" runat="server">
+                <div class="container" runat="server">
+                        Ta strona korzysta z Cookies w celu personalizacji i łatwości dotępu. Korzystając ze strony akceptujesz politykę Cookies.<br />
+                            <a href="http://ec.europa.eu/ipg/basics/legal/cookies/index_en.htm" class="btn btn-xs btn-green" id="learn-more">Dowiedz się więcej</a>
+                        <asp:Button class="btn btn-xs btn-green" id="consent" OnClick="Accept_Cookies" runat="server" Text="Ok" />
+                 </div>
+             </div>
+        <div class="footer">
+            © FacePortal team 2018
+        </div>
+    </form>
+</body>
+</html>

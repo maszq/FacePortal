@@ -1,0 +1,29 @@
+﻿table {
+    font-family:Arial;
+    font-size:100%;
+    border-style:solid;
+
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+tr:nth-child(even) {
+    background-color: rgba(10, 100, 40, 0.09);
+}
+
+tr:hover {
+    background-color: rgba(24, 41, 32, 0.25);
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.table1 {
+    overflow:auto;    
+}
