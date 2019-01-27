@@ -10,24 +10,42 @@
 namespace FacePortal {
     
     
-    public partial class CelebriteList {
+    public partial class AddCelebrite {
         
         /// <summary>
-        /// Kontrolka PlaceHolder.
+        /// Kontrolka FileUploadControl.
         /// </summary>
         /// <remarks>
         /// Pole generowane automatycznie.
         /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.PlaceHolder PlaceHolder;
+        protected global::System.Web.UI.WebControls.FileUpload FileUploadControl;
         
         /// <summary>
-        /// Kontrolka addCelebrite.
+        /// Kontrolka name.
         /// </summary>
         /// <remarks>
         /// Pole generowane automatycznie.
         /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button addCelebrite;
+        protected global::System.Web.UI.WebControls.TextBox name;
+        
+        /// <summary>
+        /// Kontrolka surname.
+        /// </summary>
+        /// <remarks>
+        /// Pole generowane automatycznie.
+        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox surname;
+        
+        /// <summary>
+        /// Kontrolka UploadButton.
+        /// </summary>
+        /// <remarks>
+        /// Pole generowane automatycznie.
+        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button UploadButton;
     }
 }

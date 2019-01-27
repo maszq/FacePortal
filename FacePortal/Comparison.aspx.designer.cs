@@ -157,6 +157,24 @@ namespace FacePortal {
         protected global::System.Web.UI.WebControls.CheckBox all;
         
         /// <summary>
+        /// Kontrolka oneCelebrite.
+        /// </summary>
+        /// <remarks>
+        /// Pole generowane automatycznie.
+        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton oneCelebrite;
+        
+        /// <summary>
+        /// Kontrolka allCelebrite.
+        /// </summary>
+        /// <remarks>
+        /// Pole generowane automatycznie.
+        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton allCelebrite;
+        
+        /// <summary>
         /// Kontrolka UploadButton.
         /// </summary>
         /// <remarks>
@@ -164,14 +182,5 @@ namespace FacePortal {
         /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button UploadButton;
-        
-        /// <summary>
-        /// Kontrolka StatusLabel.
-        /// </summary>
-        /// <remarks>
-        /// Pole generowane automatycznie.
-        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label StatusLabel;
     }
 }

@@ -43,6 +43,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="itextsharp">
+      <HintPath>.\itextsharp.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp.pdfa">
+      <HintPath>.\itextsharp.pdfa.dll</HintPath>
+    </Reference>
+    <Reference Include="itextsharp.xtra">
+      <HintPath>.\itextsharp.xtra.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
@@ -67,6 +76,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="AddCelebrite.aspx" />
     <Content Include="CelebriteList.aspx" />
     <Content Include="Comparison.aspx" />
     <Content Include="Contact.aspx" />
@@ -83,8 +93,12 @@
     <Content Include="MyAccount.aspx" />
     <Content Include="News.aspx" />
     <Content Include="Ranking.aspx" />
+    <Content Include="Raport.aspx" />
     <Content Include="Register.aspx" />
     <Content Include="res\img\bg.gif" />
+    <Content Include="res\img\face.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="res\img\Logo.JPG" />
     <Content Include="res\img\welcome.bmp" />
     <Content Include="res\xml\counter.xml" />
@@ -92,7 +106,15 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddCelebrite.aspx.cs">
+      <DependentUpon>AddCelebrite.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AddCelebrite.aspx.designer.cs">
+      <DependentUpon>AddCelebrite.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Celebrite.cs" />
+    <Compile Include="CelebriteAlbum.cs" />
     <Compile Include="CelebriteList.aspx.cs">
       <DependentUpon>CelebriteList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -100,6 +122,7 @@
     <Compile Include="CelebriteList.aspx.designer.cs">
       <DependentUpon>CelebriteList.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Character.cs" />
     <Compile Include="Comparison.aspx.cs">
       <DependentUpon>Comparison.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -164,6 +187,13 @@
     <Compile Include="Ranking.aspx.designer.cs">
       <DependentUpon>Ranking.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Raport.aspx.cs">
+      <DependentUpon>Raport.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Raport.aspx.designer.cs">
+      <DependentUpon>Raport.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Register.aspx.cs">
       <DependentUpon>Register.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -172,6 +202,7 @@
       <DependentUpon>Register.aspx</DependentUpon>
     </Compile>
     <Compile Include="SQLDatabase.cs" />
+    <Compile Include="UserAlbum.cs" />
     <Compile Include="UserList.aspx.cs">
       <DependentUpon>UserList.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

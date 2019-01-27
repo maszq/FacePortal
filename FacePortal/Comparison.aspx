@@ -2,8 +2,13 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
    
+    Wskaż zdjęcie do porównania:<br />
+
+   
     <asp:FileUpload id="FileUploadControl" runat="server" />
     <br />
+    <br />
+    Zamodeluj twarz do porównania:<br />
     <asp:Panel ID="Panel1" runat="server" Height="350px" style="margin-left: 0px" Width="318px">
         <asp:CheckBox ID="włosy" runat="server" Height="55px" style="margin-left: 155px" Width="98px" />
         <asp:CheckBox ID="czoło" runat="server" Height="40px" style="margin-left: 159px" />
@@ -30,12 +35,21 @@
     <br />
     <br />
     <br />
+    Do kogo chcesz się porównać?<br />
+    <br />
+    <asp:RadioButton ID="oneCelebrite" runat="server" GroupName="groupType" Text="Konkretny celebryta" />
+    <asp:RadioButton ID="allCelebrite" runat="server" GroupName="groupType" Height="22px" style="margin-left: 29px" Text="Wszyscy celebryci" Width="178px" />
     <br />
     <br />
-    <asp:Button runat="server" id="UploadButton" text="Upload" onclick="UploadButton_Click" />
     <br />
     <br />
-    <asp:Label runat="server" id="StatusLabel" text="Upload status: " />
+    <asp:Button runat="server" id="UploadButton" text="Wykonaj" onclick="UploadButton_Click" />
+    <br />
+    <br />
+    <br />
+
+    
+    <br />
 
     
 </asp:Content>
