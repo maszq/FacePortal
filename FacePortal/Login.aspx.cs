@@ -7,6 +7,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa odpowiadająca za logowanie użytkownika do portalu.
+    /// </summary>
     public partial class Login1 : System.Web.UI.Page
     {
         SQLDatabase db;

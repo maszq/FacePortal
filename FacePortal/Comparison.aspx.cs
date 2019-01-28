@@ -13,6 +13,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa Comparison odpowiada za możliwość zamodelowania twarzy do porównania, wskazanie zdjęcia do porównania oraz wybranie typu porównania.
+    /// </summary>
     public partial class Comparison : System.Web.UI.Page
     {
         SQLDatabase db;
@@ -20,7 +23,11 @@ namespace FacePortal
         int id, amount_character;
         List<string> characters;
         List<string> all_characters;
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected void Page_Load(object sender, EventArgs e)
         {
             Panel1.BackImageUrl = "~/res/img/face.JPG";
@@ -29,7 +36,11 @@ namespace FacePortal
             all_characters = new List<string>();
             FileUploadControl.Dispose();
         }
-
+        /// <summary>
+        /// Metoda wywoływana po wciśnięciu przycisku Wykonaj. Wstawia wskazane zdjęcie do bazy danych. Następnie zczytuje zamodelowaną twarz i wysyła przepis do silnika.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected void UploadButton_Click(object sender, EventArgs e)
         {
             db.Connect();
@@ -68,8 +79,16 @@ namespace FacePortal
             checkCharacter();
             exec(id, recepta);
 
-            if (oneCelebrite.Checked){Response.Redirect("Raport.aspx?type=one");}
-            else if (allCelebrite.Checked){Response.Redirect("Raport.aspx?type=all");}    
+            if (oneCelebrite.Checked)
+            {
+                if (ranking.Checked) Response.Redirect("Raport.aspx?type=one&ranking=true");
+                else Response.Redirect("Raport.aspx?type=one&ranking=false");
+            }
+            else if (allCelebrite.Checked)
+            {
+                if(ranking.Checked) Response.Redirect("Raport.aspx?type=all&ranking=true");
+                else Response.Redirect("Raport.aspx?type=all&ranking=false");
+            }    
         }
 
         protected void checkCharacter()
@@ -117,7 +136,7 @@ namespace FacePortal
         {
         string html = string.Empty;
         //api/values/{id}/{recepta}
-        string url = @"http://faceengine.azurewebsites.net/api/values/u/"+id+"/"+recepta;
+        string url = @"http://faceengine.azurewebsites.net/api/characteristics/u/"+id+"/"+recepta;
             Console.WriteLine(url);
         HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
         request.AutomaticDecompression = DecompressionMethods.GZip;

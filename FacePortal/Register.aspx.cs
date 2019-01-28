@@ -7,6 +7,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa odpowiadająca za rejestracje nowych użytkowników.
+    /// </summary>
     public partial class Register : System.Web.UI.Page
     {
         SQLDatabase db;

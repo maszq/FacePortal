@@ -175,6 +175,15 @@ namespace FacePortal {
         protected global::System.Web.UI.WebControls.RadioButton allCelebrite;
         
         /// <summary>
+        /// Kontrolka ranking.
+        /// </summary>
+        /// <remarks>
+        /// Pole generowane automatycznie.
+        /// By zmodyfikować deklaracje pola przenieś ją z pliku projektanta do pliku codebehind.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CheckBox ranking;
+        
+        /// <summary>
         /// Kontrolka UploadButton.
         /// </summary>
         /// <remarks>

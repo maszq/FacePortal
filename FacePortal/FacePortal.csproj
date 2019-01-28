@@ -99,7 +99,8 @@
     <Content Include="res\img\face.JPG">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="res\img\Logo.JPG" />
+    <Content Include="res\img\Logo.png" />
+    <Content Include="res\img\Logo2.png" />
     <Content Include="res\img\welcome.bmp" />
     <Content Include="res\xml\counter.xml" />
     <Content Include="UserList.aspx" />
@@ -201,6 +202,7 @@
     <Compile Include="Register.aspx.designer.cs">
       <DependentUpon>Register.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Result.cs" />
     <Compile Include="SQLDatabase.cs" />
     <Compile Include="UserAlbum.cs" />
     <Compile Include="UserList.aspx.cs">
@@ -268,6 +270,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <DocumentationFile>bin\FacePortal.xml</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />

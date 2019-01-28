@@ -8,6 +8,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa odpowiadająca za obsługę konta użytkownika.
+    /// </summary>
     public partial class MyAccount : System.Web.UI.Page
     {
         SQLDatabase db;
@@ -48,6 +51,11 @@ namespace FacePortal
 
             db.Disconnect();
         }
+        /// <summary>
+        /// Metoda tworząca formularz do zmiany danych użytkownika.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         protected void Form_Data(object sender, EventArgs e)
         {
             data_form.Visible = true;

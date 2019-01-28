@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -8,24 +9,21 @@ namespace FacePortal
 {
     public class SQLDatabase
     {
-
         /// <summary>
-        /// The class responsible for handling the connection to the database. 
-        /// It contains methods for adding, editing and deleting data from the database. 
-        /// It also includes methods for creating lists of objects on which it is easier to work.
+        /// Klasa odpowiedzialna za utworzenie i utrzymanie połaczenia z bazą danych.
+        /// Zawiera metody dodawania, edycji i usuwania danych.
+        /// IPrzechowuje również funkcje, które tworzą listy obiektów z bazy danych.
         /// </summary>
         private SqlConnection connection;
         private SqlCommand cmd;
-        /// <summary>
-        /// The method calls the Init method.
-        /// </summary>
+       
         public SQLDatabase()
         {
             Init();
         }
 
         /// <summary>
-        /// The method includes a connection to the database.
+        /// Metoda tworząca connectionString.
         /// </summary>
         private void Init()
         {
@@ -34,7 +32,7 @@ namespace FacePortal
         }
 
         /// <summary>
-        /// The method that initiates the connection to the database.
+        /// Metoda inicjująca połaczenie z bazą danych.
         /// </summary>
         public void Connect()
         {
@@ -45,6 +43,16 @@ namespace FacePortal
         {
             connection.Close();
         }
+        /// <summary>
+        /// Metoda dodająca użytkownika do bazy danych.
+        /// </summary>
+        /// <param name="nickname"></param>
+        /// <param name="password"></param>
+        /// <param name="email"></param>
+        /// <param name="name"></param>
+        /// <param name="surname"></param>
+        /// <param name="sex"></param>
+        /// <param name="type"></param>
         public void InsertUser(string nickname, string password, string email, string name, string surname, string sex, string type)
         {
             string query =
@@ -62,6 +70,26 @@ namespace FacePortal
             cmd.ExecuteNonQuery();
         }
 
+        public void InsertResult(int id_user, int id_celebrite, int result, bool ranking)
+        {
+            int ranking_int = 0;
+            if (ranking) ranking_int = 1;
+            string query =
+                "INSERT INTO RESULT VALUES " +
+                "("
+                + id_user + ", "
+                + id_celebrite + ", "
+                + result + ", "
+                + ranking_int + ");";
+
+            cmd = new SqlCommand(query, connection);
+            cmd.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Metoda obsługująca edycje hasła użytkownika.
+        /// </summary>
+        /// <param name="id_u"></param>
         public void ResetPassword(int id_u)
         {
             string query =
@@ -72,6 +100,11 @@ namespace FacePortal
             cmd = new SqlCommand(query, connection);
             cmd.ExecuteNonQuery();
         }
+        /// <summary>
+        /// Funkcja zwracająca email użytkownika na podstawie jego id.
+        /// </summary>
+        /// <param name="id_u"></param>
+        /// <returns></returns>
         public string getEmail(int id_u)
         {
             String email = "";
@@ -84,6 +117,11 @@ namespace FacePortal
             return email;
         }
 
+        /// <summary>
+        /// Funkcja zwracająca nickname użytkownika na podstawie jego id.
+        /// </summary>
+        /// <param name="id_u"></param>
+        /// <returns></returns>
         public String getNickname_id(int id_u)
         {
             string nick = "";
@@ -96,6 +134,9 @@ namespace FacePortal
             return nick;
         }
 
+        /// <summary>
+        /// Metoda dodająca cechy użytkownika. Domyślnie równe -1, silnik po wyekstrachowaniu je aktualizuje.
+        /// </summary>
         public void InsertCharacter()
         {
             string query =
@@ -162,7 +203,10 @@ namespace FacePortal
             SqlDataReader dr = cmd.ExecuteReader();
             return dr;
         }
-
+        /// <summary>
+        /// Funkcja zwracająca listę obiektów User.
+        /// </summary>
+        /// <returns></returns>
         public List<User> UserList()
         {
             List<User> list = new List<User>();

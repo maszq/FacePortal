@@ -9,7 +9,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
-    
+    /// <summary>
+    /// Klasa odpowiadająca wyświetlenie listy użytkowników oraz obsługę ich kont.
+    /// </summary>
     public partial class UserList1 : System.Web.UI.Page
 
     {SQLDatabase db;
@@ -63,7 +65,11 @@ namespace FacePortal
             Send_Email(db.getEmail(id_u), db.getNickname_id(id_u));
             db.Disconnect();
         }
-
+        /// <summary>
+        /// Metoda wysyłająca email powiadamiający o zmianie hasła.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="nickname"></param>
         protected void Send_Email(string email, string nickname)
         {
             MailMessage msg = new MailMessage();

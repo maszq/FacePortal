@@ -41,6 +41,7 @@
     <asp:RadioButton ID="allCelebrite" runat="server" GroupName="groupType" Height="22px" style="margin-left: 29px" Text="Wszyscy celebryci" Width="178px" />
     <br />
     <br />
+    &nbsp;<asp:CheckBox ID="ranking" runat="server" Text="Dodaj do rankingu" />
     <br />
     <br />
     <asp:Button runat="server" id="UploadButton" text="Wykonaj" onclick="UploadButton_Click" />

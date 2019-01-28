@@ -8,6 +8,9 @@ using System.Web.UI.WebControls;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa odpowiadająca za wyświetlanie listy celebrytów.
+    /// </summary>
     public partial class CelebriteList : System.Web.UI.Page
     {
 

@@ -9,7 +9,9 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 
 namespace FacePortal
-{
+{/// <summary>
+/// Klasa odpowiadająca za dodawanie celebrytów do bazy danych.
+/// </summary>
     public partial class AddCelebrite : System.Web.UI.Page
     {
         SQLDatabase db;
@@ -39,7 +41,7 @@ namespace FacePortal
             allCharacter();
 
             exec(id, recepta);
-            //Response.Redirect("CelebriteList.aspx");
+            Response.Redirect("CelebriteList.aspx");
         }
 
         protected void addCelebrite()
@@ -94,7 +96,7 @@ namespace FacePortal
         {
             string html = string.Empty;
             //api/values/{id}/{recepta}
-            string url = @"http://faceengine.azurewebsites.net/api/values/a/" + getId_celebrite_album() + "/" + recepta;
+            string url = @"http://faceengine.azurewebsites.net/api/characteristics/a/" + getId_celebrite_album() + "/" + recepta;
             Console.WriteLine(url);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.AutomaticDecompression = DecompressionMethods.GZip;
@@ -109,7 +111,10 @@ namespace FacePortal
             }
             Console.WriteLine(html);
         }
-
+        /// <summary>
+        /// Funkcja zwracająca Id celebryty na podstawie id cechy.
+        /// </summary>
+        /// <returns></returns>
         protected Int32 getId_celebrite_album()
         {
             int temp = 0;

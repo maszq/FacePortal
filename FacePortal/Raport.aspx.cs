@@ -12,6 +12,9 @@ using System.Net;
 
 namespace FacePortal
 {
+    /// <summary>
+    /// Klasa obliczająca wynik porównania.
+    /// </summary>
     public partial class Raport : System.Web.UI.Page
     {
         SQLDatabase db;
@@ -22,6 +25,15 @@ namespace FacePortal
         int id, id_celebrite, id_character_celebrite, id_character_user;
         StringBuilder html;
         string nickname;
+        bool ranking;
+        List<Result> lista_wynikow;
+        bool all;
+        bool pdf_one = false;
+
+        Byte[] bytes;
+        MemoryStream ms;
+        Document doc;
+        PdfWriter wri;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -34,10 +46,18 @@ namespace FacePortal
             nickname = db.getNickname_email((string)Session["id"]);
             list_user_album = db.UserAlbum();
             db.Disconnect();
+            ranking = false;
+            lista_wynikow = new List<Result>();
+            all = false;
 
-            //string name_user = db.getNickname_id()
+            ms = new MemoryStream();
+            doc = new Document(iTextSharp.text.PageSize.LETTER, 10, 10, 42, 35);
+            wri = PdfWriter.GetInstance(doc, ms);
+
+
 
             html = new StringBuilder();
+            if (Request.QueryString["ranking"] == "true") ranking = true;
 
             if (Request.QueryString["type"] == "one" && Request.QueryString["id_celebrite"]==null)
             {
@@ -62,35 +82,64 @@ namespace FacePortal
 
             if (Request.QueryString["type"] == "one" && Request.QueryString["id_celebrite"] != null)
             {
-                //generateDoc.Visible = true;
+                pdf_one = true;
+                generateDoc.Visible = true;
                 id_celebrite = int.Parse(Request.QueryString["id_celebrite"]);
-                id_character_celebrite = find_id_character_celebrite().Max();
+                id_character_celebrite = find_id_character_celebrite(id_celebrite-1);
                 id_character_user = find_id_character_user().Max();
-
-                compareCharacters();
-
+                all = false;
+                compareCharacters(id_character_celebrite, id_celebrite-1, true, 0);
+                name.Visible = true;
+                Surname.Visible = true;
+                name_value.Visible = true;
+                surname_value.Visible = true;
+                name_value.Text = list_celebrite.ElementAt(id_celebrite-1).name ;
+                surname_value.Text = list_celebrite.ElementAt(id_celebrite-1).surname;
             }
 
             if (Request.QueryString["type"] == "all")
             {
-                //generateDoc.Visible = true;
+                generateDoc.Visible = true;
+                pdf_one = false;
+                if(Request.QueryString["id_celebrite"]!=null) id_celebrite = int.Parse(Request.QueryString["id_celebrite"]);
                 id_character_user = find_id_character_user().Max();
 
-                compareCharacters();
+                all = true;
+                int t = 0;
+                for (int i = 0; i <list_celebrite.Count();i++)
+                {
+                    compareCharacters(list_celebrite.ElementAt(i).id_character,list_celebrite.ElementAt(i).id, false, 0);
+                    t++;
+                }
 
+                all = false;
+                int max_id_cel = find_idcel_z_max_lista_wynikow();
+                name.Visible = true;
+                Surname.Visible = true;
+                name_value.Visible = true;
+                surname_value.Visible = true;
+
+                name_value.Text =list_celebrite.ElementAt(max_id_cel).name;
+                //name_value.Text = lista_wynikow.ElementAt(0).percent_result.ToString();
+                surname_value.Text =list_celebrite.ElementAt(max_id_cel).surname;
+
+                compareCharacters(find_id_character_celebrite(max_id_cel), max_id_cel+1, true, max_id_cel);
 
             }
 
             PlaceHolder.Controls.Add(new Literal { Text = html.ToString() });
         }
-
-        protected void compareCharacters()
+        /// <summary>
+        /// Metoda obliczająca różnice w cechach.
+        /// </summary>
+        protected void compareCharacters(int id_char_cel, int id_cel, bool pdf, int max_id_cel)
         {
             List<Int32> roznica = new List<Int32>();
-            Character celebrite = list_character.ElementAt(id_character_celebrite-1);
+            Character celebrite = list_character.ElementAt(id_char_cel);
             wyniki_pdf = new List<Double>();
             Character user = list_character.ElementAt(id_character_user-1);
             Double wynik = 0;
+            int ilosc_cech = 0;
             
             roznica.Add(Math.Abs(celebrite.wlosy_kolor-user.wlosy_kolor));
             roznica.Add(Math.Abs(celebrite.czolo_wys - user.czolo_wys));
@@ -109,69 +158,152 @@ namespace FacePortal
             roznica.Add(Math.Abs(celebrite.broda_wys-user.broda_wys));
             roznica.Add(Math.Abs(celebrite.usta_szer-user.usta_szer));
             roznica.Add(Math.Abs(celebrite.usta_wys-user.usta_wys));
+            if (pdf)
+            {
+                doc.Open();
+                Paragraph par = new Paragraph("Raport porównania użytkownika " + nickname+"\n");
+                doc.Add(par);
+                if (pdf_one) par = new Paragraph("Celebryta z porównania " + list_celebrite.ElementAt(id_cel).name + " " + list_celebrite.ElementAt(id_cel).surname + "\n");
+                else par = new Paragraph("Celebryta z porównania " + list_celebrite.ElementAt(id_cel - 1).name + " " + list_celebrite.ElementAt(id_cel - 1).surname + "\n");
 
+                doc.Add(par);
+                par = new Paragraph("\n");
+                doc.Add(par);
+            }
             //wlosy
-            if (roznica.ElementAt(0) ==0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(0) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(0) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(0) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            wlosy.Text = roznica.ElementAt(0).ToString();
-            wlosy.Visible = true;
+            if (user.wlosy_kolor != -1)
+            {
+                 if (roznica.ElementAt(0) ==0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(0) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(0) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(0) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                // wlosy.Text = roznica.ElementAt(0).ToString();
+                wlosy.Text = (wyniki_pdf.Last()*100).ToString()+"%";
+                wlosy.Visible = true;
+                ilosc_cech++;
+                Label2.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Wlosy = " + (wyniki_pdf.Last() * 100).ToString()+"\n");
+                    doc.Add(par);
+                }
+            }
 
             //czolo_wys
-            if (roznica.ElementAt(1) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(1) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(1) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(1) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            czolo_wys.Text = roznica.ElementAt(1).ToString();
-            czolo_wys.Visible = true;
+            if (user.czolo_wys != -1)
+            {
+                if (roznica.ElementAt(1) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(1) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(1) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(1) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                czolo_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                czolo_wys.Visible = true;
+                ilosc_cech++;
+                Label3.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Czolo wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //czolo_szer
-            if (roznica.ElementAt(2) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(2) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(2) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(2) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            czolo_szer.Text = roznica.ElementAt(2).ToString();
-            czolo_szer.Visible = true;
+            if (user.czolo_szer != -1)
+            {
+                if (roznica.ElementAt(2) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(2) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(2) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(2) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                czolo_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                czolo_szer.Visible = true;
+                ilosc_cech++;
+                Label4.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Czolo szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //oko_lewe_szer
-            if (roznica.ElementAt(3) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(3) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(3) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(3) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            oko_lewe_szer.Text = roznica.ElementAt(3).ToString();
-            oko_lewe_szer.Visible = true;
+            if (user.oko_lewe_szer != -1)
+            {
+                if (roznica.ElementAt(3) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(3) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(3) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(3) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                oko_lewe_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                oko_lewe_szer.Visible = true;
+                ilosc_cech++;
+                Label5.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Oko lewe szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
+
 
             //oko_lewe_wys
-            if (roznica.ElementAt(4) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(4) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(4) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(4) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            oko_lewe_wys.Text = roznica.ElementAt(4).ToString();
-            oko_lewe_wys.Visible = true;
+            if (user.oko_lewe_wys != -1)
+            {
+                if (roznica.ElementAt(4) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(4) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(4) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(4) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                oko_lewe_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%"; 
+                oko_lewe_wys.Visible = true;
+                ilosc_cech++;
+                Label6.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Oko lewe wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //oko_prawe_szer
-            if (roznica.ElementAt(5) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(5) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(5) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(5) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            oko_prawe_szer.Text = roznica.ElementAt(5).ToString();
-            oko_prawe_szer.Visible = true;
+            if (user.oko_prawe_szer != -1)
+            {
+                if (roznica.ElementAt(5) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(5) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(5) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(5) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                oko_prawe_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                oko_prawe_szer.Visible = true;
+                ilosc_cech++;
+                Label7.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Oko prawe szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //oko_prawe_wys
-            if (roznica.ElementAt(6) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(6) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(6) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(6) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            oko_prawe_wys.Text = roznica.ElementAt(6).ToString();
-            oko_prawe_wys.Visible = true;
+            if (user.oko_prawe_wys != -1)
+            {
+                if (roznica.ElementAt(6) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(6) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(6) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(6) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                oko_prawe_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                oko_prawe_wys.Visible = true;
+                ilosc_cech++;
+                Label8.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Oko prawe wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //twarz_szer
             if (roznica.ElementAt(7) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
@@ -179,8 +311,15 @@ namespace FacePortal
             else if (roznica.ElementAt(7) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
             else if (roznica.ElementAt(7) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
             else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            twarz_szer.Text = roznica.ElementAt(7).ToString();
+            twarz_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
             twarz_szer.Visible = true;
+            ilosc_cech++;
+            Label9.Visible = true;
+            if (pdf)
+            {
+                Paragraph par = new Paragraph("Twarz szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                doc.Add(par);
+            }
 
             //twarz_wys
             if (roznica.ElementAt(8) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
@@ -188,107 +327,242 @@ namespace FacePortal
             else if (roznica.ElementAt(8) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
             else if (roznica.ElementAt(8) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
             else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            twarz_wys.Text = roznica.ElementAt(8).ToString();
+            twarz_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
             twarz_wys.Visible = true;
+            ilosc_cech++;
+            Label10.Visible = true;
+            if (pdf)
+            {
+                Paragraph par = new Paragraph("Twarz wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                doc.Add(par);
+            }
 
             //odl_oczy
-            if (roznica.ElementAt(9) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(9) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(9) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(9) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            odl_oczy.Text = roznica.ElementAt(9).ToString();
-            odl_oczy.Visible = true;
+            if (user.oko_prawe_wys != -1 && user.oko_prawe_szer != -1 && user.oko_lewe_szer != -1 && user.oko_lewe_wys != -1)
+            {
+                if (roznica.ElementAt(9) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(9) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(9) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(9) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                odl_oczy.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                odl_oczy.Visible = true;
+                ilosc_cech++;
+                Label11.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Odl. oczy = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //polik_lewy
-            if (roznica.ElementAt(10) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(10) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(10) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(10) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            polik_lewy_szer.Text = roznica.ElementAt(10).ToString();
-            polik_lewy_szer.Visible = true;
+            if (user.polik_lewy_szer != -1)
+            {
+                if (roznica.ElementAt(10) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(10) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(10) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(10) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                polik_lewy_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                polik_lewy_szer.Visible = true;
+                ilosc_cech++;
+                Label12.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Polik lewy = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //polik_prawy
-            if (roznica.ElementAt(11) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(11) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(11) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(11) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            polik_prawy_szer.Text = roznica.ElementAt(011).ToString();
-            polik_prawy_szer.Visible = true;
+            if (user.polik_prawy_szer != -1)
+            {
+                if (roznica.ElementAt(11) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(11) <= 10) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(11) <= 20) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(11) <= 30) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                polik_prawy_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                polik_prawy_szer.Visible = true;
+                ilosc_cech++;
+                Label13.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Polik prawy = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //nos
-            if (roznica.ElementAt(12) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(12) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(12) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(12) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            nos_wys.Text = roznica.ElementAt(12).ToString();
-            nos_wys.Visible = true;
+            if (user.nos_wys != -1)
+            {
+                if (roznica.ElementAt(12) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(12) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(12) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(12) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                nos_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                nos_wys.Visible = true;
+                ilosc_cech++;
+                Label14.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Nos = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //broda_wys
-            if (roznica.ElementAt(13) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(13) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(13) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(13) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            broda_wys.Text = roznica.ElementAt(13).ToString();
-            broda_wys.Visible = true;
+            if (user.broda_wys != -1)
+            {
+                if (roznica.ElementAt(13) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(13) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(13) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(13) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                broda_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                broda_wys.Visible = true;
+                ilosc_cech++;
+                Label15.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Broda wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //broda_szer
-            if (roznica.ElementAt(14) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(14) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(14) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(14) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            broda_szer.Text = roznica.ElementAt(014).ToString();
-            broda_szer.Visible = true;
+            if (user.broda_szer != -1)
+            {
+                if (roznica.ElementAt(14) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(14) <= 5) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(14) <= 10) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(14) <= 15) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                broda_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                broda_szer.Visible = true;
+                ilosc_cech++;
+                Label16.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Broda szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //usta_szer
-            if (roznica.ElementAt(15) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(15) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(15) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(15) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            usta_szer.Text = roznica.ElementAt(15).ToString();
-            usta_szer.Visible = true;
+            if (user.usta_szer != -1)
+            {
+                if (roznica.ElementAt(15) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(15) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(15) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(15) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                usta_szer.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                usta_szer.Visible = true;
+                ilosc_cech++;
+                Label17.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Usta szer = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
 
             //usta_wys
-            if (roznica.ElementAt(16) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
-            else if (roznica.ElementAt(16) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
-            else if (roznica.ElementAt(16) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
-            else if (roznica.ElementAt(16) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
-            else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
-            usta_wys.Text = roznica.ElementAt(16).ToString();
-            usta_wys.Visible = true;
-
-            result.Text = wynik.ToString();
+            if (user.usta_wys != -1)
+            {
+                if (roznica.ElementAt(16) == 0) { wynik = wynik + 1; wyniki_pdf.Add(1); }
+                else if (roznica.ElementAt(16) <= 3) { wynik = wynik + 0.9; wyniki_pdf.Add(0.9); }
+                else if (roznica.ElementAt(16) <= 6) { wynik = wynik + 0.7; wyniki_pdf.Add(0.7); }
+                else if (roznica.ElementAt(16) <= 9) { wynik = wynik + 0.5; wyniki_pdf.Add(0.5); }
+                else { wynik = wynik + 0.3; wyniki_pdf.Add(0.3); }
+                usta_wys.Text = (wyniki_pdf.Last() * 100).ToString() + "%";
+                usta_wys.Visible = true;
+                ilosc_cech++;
+                Label18.Visible = true;
+                if (pdf)
+                {
+                    Paragraph par = new Paragraph("Usta wys = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                    doc.Add(par);
+                }
+            }
+            wyniki_pdf.Add(wynik / ilosc_cech);
+            result.Text = ((wyniki_pdf.Last())*100).ToString()+"%";
+            if (pdf)
+            {
+                Paragraph par = new Paragraph("Ogólny wynik = " + (wyniki_pdf.Last() * 100).ToString() + "\n");
+                doc.Add(par);
+                doc.Close();
+            }
             result.Visible = true;
-            Label2.Visible = true;
-            Label3.Visible = true;
-            Label4.Visible = true;
-            Label5.Visible = true;
-            Label6.Visible = true;
-            Label7.Visible = true;
-            Label8.Visible = true;
-            Label9.Visible = true;
-            Label10.Visible = true;
-            Label11.Visible = true;
-            Label12.Visible = true;
-            Label13.Visible = true;
-            Label14.Visible = true;
-            Label15.Visible = true;
-            Label16.Visible = true;
-            Label17.Visible = true;
-            Label18.Visible = true;
             Label19.Visible = true;
 
+            db.Connect();
+            db.InsertResult(id, id_cel, (int)((wynik / ilosc_cech) * 100), ranking);
+            if (all) lista_wynikow.Add(new Result(id, id_cel, (int)((wynik / ilosc_cech) * 100), ranking));
+            db.Disconnect();
+        }
+        
+        /// <summary>
+        /// Metoda tworząca raport PDF.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected void generateDoc_Click(object sender, EventArgs e)
+        {
 
+            bytes = ms.ToArray();
 
+            Response.AddHeader("content-disposition", "attachment;filename=Raport.pdf");
+            Response.ContentType = "application/pdf";
+
+            Response.BinaryWrite(bytes);
+            Response.End();
         }
 
-        protected void generateDoc_Click(object sender, EventArgs e)
+        protected List<Int32> find_id_character_user()
+        {
+            List<Int32> temp = new List<Int32>();
+
+            for (int i = 0; i < list_user_album.Count(); i++)
+            {
+                if (list_user_album.ElementAt(i).id_user == id) temp.Add(list_user_album.ElementAt(i).id_character);
+            }
+            return temp;
+        }
+
+        protected int find_id_character_celebrite(int id_cel)
+        {
+            int temp = 0;
+
+            for (int i = 0; i < list_celebrite.Count(); i++)
+            {
+                if (list_celebrite.ElementAt(i).id == id_cel) temp=list_celebrite.ElementAt(i).id_character;
+            }
+
+            return temp;
+        }
+
+        protected Int32 find_idcel_z_max_lista_wynikow()
+        {
+            int temp_id_cel = 0;
+            int temp_result = 0;
+            for (int i = 0; i < lista_wynikow.Count(); i++)
+            {
+                if (lista_wynikow.ElementAt(i).percent_result > temp_result)
+                {
+                    temp_id_cel = lista_wynikow.ElementAt(i).id_celebrite;
+                    temp_result = lista_wynikow.ElementAt(i).percent_result;
+                }
+            }
+
+            return temp_id_cel;
+        }
+
+
+        /*protected void 1generateDoc_Click(object sender, EventArgs e)
         {
 
             Byte[] bytes;
@@ -318,31 +592,8 @@ namespace FacePortal
 
             Response.BinaryWrite(bytes);
             Response.End();
+        }*/
 
-        }
 
-        protected List<Int32> find_id_character_user()
-        {
-            List<Int32> temp = new List<Int32>();
-
-            for (int i = 0; i < list_user_album.Count(); i++)
-            {
-                if (list_user_album.ElementAt(i).id_user == id) temp.Add(list_user_album.ElementAt(i).id_character);
-            }
-
-            return temp;
-        }
-
-        protected List<Int32> find_id_character_celebrite()
-        {
-            List<Int32> temp = new List<Int32>();
-
-            for (int i = 0; i < list_celebrite.Count(); i++)
-            {
-                if (list_celebrite.ElementAt(i).id == id_celebrite) temp.Add(list_celebrite.ElementAt(i).id_character);
-            }
-
-            return temp;
-        }
     }
 }
